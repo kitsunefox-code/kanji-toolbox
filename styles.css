@@ -146,6 +146,46 @@ footer .links a{color:var(--ai-soft);text-decoration:none;font-weight:700}
 .rank.top1 .no{background:var(--gold-bright);color:var(--ai-deep)}
 .rank .nm{font-weight:700;font-size:15px}
 
+/* ===== bingo ===== */
+.bingo-current{text-align:center;padding:8px 0 4px}
+.bingo-letter{display:block;font-size:20px;font-weight:900;color:var(--gold);letter-spacing:.1em}
+.bingo-num{font-size:66px;font-weight:900;color:var(--ai);font-variant-numeric:tabular-nums;line-height:1.05}
+.bingo-num.empty{font-size:22px;color:var(--ink-mute);font-weight:700}
+.bingo-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;margin-top:6px}
+.bingo-cell{aspect-ratio:1;display:grid;place-items:center;border-radius:6px;background:#f0f2f4;color:#c0c4cc;font-size:11px;font-weight:700;font-variant-numeric:tabular-nums;transition:.15s}
+.bingo-cell.hit{background:var(--ai);color:#fff}
+.bingo-cell.last{background:var(--gold-bright);color:var(--ai-deep)}
+.bingo-count{text-align:center;font-size:12px;color:var(--ink-mute);margin-top:10px}
+.bingo-hist{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;justify-content:center}
+.bingo-hist span{background:#eef0f4;border-radius:6px;padding:3px 8px;font-size:12px;font-weight:700;font-variant-numeric:tabular-nums}
+
+/* ===== shukkin (出欠・集金) ===== */
+.sk-head{display:grid;grid-template-columns:1fr 58px 34px;gap:8px;padding:0 12px 6px;font-size:11px;color:var(--ink-mute);font-weight:700;text-align:center}
+.sk-head span:first-child{text-align:left}
+.sk-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.sk-row{display:grid;grid-template-columns:1fr 58px 34px;gap:8px;align-items:center;padding:8px 12px;border-radius:11px;background:#faf8f3;border:1px solid var(--line)}
+.sk-row input.name{border:0;border-bottom:1px solid var(--line);background:transparent;font-family:var(--font);font-size:14px;padding:4px 2px;color:var(--ink);outline:0;min-width:0;width:100%}
+.sk-row input.name:focus{border-bottom-color:var(--ai)}
+.sk-toggle{border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 0;font-size:12px;font-weight:800;cursor:pointer;font-family:var(--font);color:var(--ink-mute)}
+.sk-toggle.yes{background:var(--good);color:#fff;border-color:var(--good)}
+.sk-toggle.no{background:#f6e6e6;color:var(--bad);border-color:#e8c9c9}
+.sk-pay{width:34px;height:34px;border-radius:8px;border:1px solid var(--line);background:#fff;cursor:pointer;font-size:15px;display:grid;place-items:center;color:#c7ccd6}
+.sk-pay.paid{background:var(--gold-bright);border-color:var(--gold);color:var(--ai-deep)}
+
+/* ===== checklist ===== */
+.progress{height:12px;border-radius:999px;background:#eef0f4;overflow:hidden;margin:8px 0 3px}
+.progress .bar{height:100%;width:0;background:linear-gradient(90deg,var(--gold-bright),var(--ai));transition:width .35s}
+.progress-label{font-size:12px;color:var(--ink-mute);font-weight:800;text-align:right;font-variant-numeric:tabular-nums}
+.cl-group{margin-top:4px}
+.cl-group + .cl-group{margin-top:14px}
+.cl-group h3{font-size:13px;margin:0 0 8px;color:var(--ai);letter-spacing:.02em}
+.cl-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.cl-item{display:flex;align-items:flex-start;gap:10px;padding:9px 12px;border-radius:10px;background:#faf8f3;border:1px solid var(--line);cursor:pointer}
+.cl-item .box{flex:0 0 auto;width:22px;height:22px;border-radius:6px;border:2px solid #d6d0c4;display:grid;place-items:center;font-size:13px;color:#fff;background:#fff;transition:.15s}
+.cl-item.done .box{background:var(--good);border-color:var(--good)}
+.cl-item.done .txt{color:var(--ink-mute);text-decoration:line-through}
+.cl-item .txt{font-size:13.5px;font-weight:600;line-height:1.45}
+
 /* ===== roulette ===== */
 .wheel-wrap{position:relative;width:280px;height:280px;margin:6px auto 2px}
 .wheel-wrap canvas{width:280px;height:280px;border-radius:50%;box-shadow:0 10px 30px rgba(18,32,60,.18),0 0 0 8px #fff,0 0 0 10px var(--line)}

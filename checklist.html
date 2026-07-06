@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>幹事の準備チェックリスト｜飲み会・忘年会・歓送迎会の段取り｜幹事の道具箱</title>
+<meta name="description" content="飲み会・忘年会・新年会・歓送迎会の幹事がやることを、日程調整から当日・後日まで時系列のチェックリストに。進捗バーで残りが一目。抜け漏れ防止に。自動保存・登録不要・無料。">
+<meta name="theme-color" content="#1b2a4a">
+<meta property="og:title" content="幹事の準備チェックリスト">
+<meta property="og:description" content="飲み会・忘年会の段取りを時系列チェックリストで。抜け漏れ防止に。">
+<link rel="canonical" href="https://kusayakyu-navi.com/kanji-toolbox/checklist.html">
+<link rel="stylesheet" href="styles.css">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6423402285554400" crossorigin="anonymous"></script>
+</head>
+<body>
+<div class="app">
+  <header class="masthead tool">
+    <a class="back" href="index.html" aria-label="道具箱にもどる">‹</a>
+    <div class="brand-mark"><span class="kan">段</span>幹事の準備チェックリスト</div>
+  </header>
+
+  <main>
+    <section class="panel">
+      <div class="progress"><div class="bar" id="bar"></div></div>
+      <div class="progress-label" id="plabel">0 / 0 完了</div>
+      <div id="groups"></div>
+    </section>
+  </main>
+
+  <footer>
+    <h3>幹事の準備チェックリストの使い方</h3>
+    <p>飲み会・忘年会・新年会・歓送迎会の幹事がやることを、「2〜3週間前」「1週間前」「前日〜当日」「後日」の時系列で並べたチェックリストです。項目をタップすると完了になり、上部の進捗バーで残りの段取りが一目で分かります。初めての幹事でも抜け漏れなく準備を進められます。チェック状況はブラウザに自動保存されるので、少しずつ進めても大丈夫です。会費の計算は<a href="warikan.html">傾斜わりかん</a>や<a href="kaihi.html">会費シミュレータ</a>、出欠と集金の管理は<a href="shukkin.html">出欠・集金チェック表</a>と合わせてどうぞ。</p>
+    <div class="links"><a href="index.html">← ほかの幹事ツール</a></div>
+  </footer>
+</div>
+
+<div class="toast" id="toast">リセットしました</div>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  var KEY="kanjitools_checklist_v1";
+  var DATA=[
+    {t:"2〜3週間前", items:["日程を決める（候補日を出して参加者に確認）","参加メンバーに声をかける／人数をざっくり把握","お店を探す・仮予約する","予算（ひとりの会費）の目安を決める"]},
+    {t:"1週間前", items:["お店を本予約する（人数・コース・時間）","参加者に日時・場所・会費を正式アナウンス","出欠の最終確認をとる","二次会の場所を考えておく","（必要なら）景品・プレゼントを用意する"]},
+    {t:"前日〜当日", items:["人数の最終確定をお店に連絡","集金方法を決める（当日・事前・傾斜割り勘など）","主役・上司の席を決めておく","当日の受付・集金を始める","乾杯の音頭を誰かにお願いする","二次会の人数を確認する"]},
+    {t:"後日", items:["お店・参加者へお礼の連絡","立替があれば精算する","写真を共有する","次回の幹事や反省点をメモ"]}
+  ];
+  var state={};
+  try{ var s=JSON.parse(localStorage.getItem(KEY)); if(s&&typeof s==="object")state=s; }catch(e){}
+  function save(){ try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){} }
+  function key(g,i){ return g+"_"+i; }
+
+  function render(){
+    var wrap=$("groups"); wrap.innerHTML=""; var total=0,done=0;
+    DATA.forEach(function(grp,gi){
+      var box=document.createElement("div"); box.className="cl-group";
+      var h=document.createElement("h3"); h.textContent=grp.t; box.appendChild(h);
+      var ul=document.createElement("ul"); ul.className="cl-list";
+      grp.items.forEach(function(txt,ii){
+        total++; var k=key(gi,ii); var on=!!state[k]; if(on)done++;
+        var li=document.createElement("li"); li.className="cl-item"+(on?" done":"");
+        var box2=document.createElement("span"); box2.className="box"; box2.textContent=on?"✓":"";
+        var t=document.createElement("span"); t.className="txt"; t.textContent=txt;
+        li.appendChild(box2); li.appendChild(t);
+        li.onclick=function(){ state[k]=!state[k]; save(); render(); };
+        ul.appendChild(li);
+      });
+      box.appendChild(ul); wrap.appendChild(box);
+    });
+    var pct=total?Math.round(done/total*100):0;
+    $("bar").style.width=pct+"%";
+    $("plabel").textContent=done+" / "+total+" 完了（"+pct+"%）";
+  }
+  render();
+})();
+</script>
+</body>
+</html>

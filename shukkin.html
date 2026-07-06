@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>出欠・集金チェック表｜飲み会の参加者と会費回収をまとめて管理｜幹事の道具箱</title>
+<meta name="description" content="飲み会の出欠と会費の回収状況をまとめて管理できるチェック表。会費を入れれば参加者ぶんの集金予定額・回収済み・未回収を自動集計。自動保存で幹事の当日運用に。登録不要・無料。">
+<meta name="theme-color" content="#1b2a4a">
+<meta property="og:title" content="出欠・集金チェック表">
+<meta property="og:description" content="出欠と会費回収をまとめて管理。集金予定・回収済み・未回収を自動集計。">
+<link rel="canonical" href="https://kusayakyu-navi.com/kanji-toolbox/shukkin.html">
+<link rel="stylesheet" href="styles.css">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6423402285554400" crossorigin="anonymous"></script>
+</head>
+<body>
+<div class="app has-bar">
+  <header class="masthead tool">
+    <a class="back" href="index.html" aria-label="道具箱にもどる">‹</a>
+    <div class="brand-mark"><span class="kan">出</span>出欠・集金チェック表</div>
+  </header>
+
+  <main>
+    <section class="panel">
+      <label class="field-label" for="fee">ひとりの会費</label>
+      <div class="amount-input"><span class="yen">¥</span><input id="fee" type="text" inputmode="numeric" autocomplete="off" value="5,000"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><h2>メンバー</h2>
+        <div class="count-ctrl"><button type="button" id="minus" aria-label="減らす">−</button><span id="count">0</span><button type="button" id="plus" aria-label="増やす">＋</button></div>
+      </div>
+      <div class="sk-head"><span>名前</span><span>出欠</span><span>集金</span></div>
+      <ul class="sk-list" id="list"></ul>
+      <p class="hint">「出欠」をタップで参加⇄不参加、💰で集金済みに。内容は自動保存されます。</p>
+    </section>
+  </main>
+
+  <footer>
+    <h3>出欠・集金チェック表とは</h3>
+    <p>飲み会や歓送迎会の出欠確認と会費の回収状況を、ひとつの表でまとめて管理できるツールです。ひとりぶんの会費を入力すると、参加者の人数から集金予定額を自動計算し、回収済み・未回収の金額をリアルタイムに集計します。当日の受付で「誰から集金済みか」を素早く把握でき、入力内容はブラウザに自動保存されるので閉じても消えません。</p>
+    <div class="links"><a href="index.html">← ほかの幹事ツール</a></div>
+  </footer>
+</div>
+
+<div class="settle" id="settle">
+  <div class="settle-line"><span>回収済み</span><strong id="collected">¥0</strong></div>
+  <div class="settle-line sub"><span>参加 <b id="attn">0</b>人 ／ 集金予定 <b id="expected">¥0</b> ／ 未回収</span><span id="remain" class="ok">¥0</span></div>
+  <div class="settle-actions">
+    <button type="button" class="btn ghost" id="copy" style="flex:1">状況をコピー</button>
+    <button type="button" class="btn line" id="line" style="flex:1">LINEで送る</button>
+  </div>
+</div>
+<div class="toast" id="toast">コピーしました</div>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  var KEY="kanjitools_shukkin_v1";
+  var people=[], fee=5000;
+  try{ var s=JSON.parse(localStorage.getItem(KEY)); if(s){ if(Array.isArray(s.people))people=s.people; if(typeof s.fee==="number")fee=s.fee; } }catch(e){}
+  if(!people.length){ people=[
+    {name:"田中",attend:true,paid:false},{name:"佐藤",attend:true,paid:true},
+    {name:"鈴木",attend:false,paid:false},{name:"高橋",attend:true,paid:false}
+  ]; }
+
+  function yen(n){return "¥"+Math.round(n).toLocaleString("ja-JP");}
+  function parseAmt(v){return parseInt(String(v).replace(/[^\d]/g,""),10)||0;}
+  function save(){ try{localStorage.setItem(KEY,JSON.stringify({people:people,fee:fee}));}catch(e){} }
+
+  function renderList(){
+    var ul=$("list"); ul.innerHTML="";
+    people.forEach(function(p,idx){
+      var li=document.createElement("li"); li.className="sk-row";
+      var name=document.createElement("input"); name.className="name"; name.type="text"; name.value=p.name; name.setAttribute("aria-label","名前");
+      name.oninput=function(){ p.name=name.value; save(); };
+      var att=document.createElement("button"); att.type="button"; att.className="sk-toggle "+(p.attend?"yes":"no"); att.textContent=p.attend?"参加":"不参加";
+      att.onclick=function(){ p.attend=!p.attend; if(!p.attend)p.paid=false; save(); render(); };
+      var pay=document.createElement("button"); pay.type="button"; pay.className="sk-pay"+(p.paid?" paid":""); pay.textContent="💰"; pay.setAttribute("aria-label","集金済み");
+      pay.onclick=function(){ if(!p.attend){ return; } p.paid=!p.paid; save(); render(); };
+      li.appendChild(name); li.appendChild(att); li.appendChild(pay);
+      ul.appendChild(li);
+    });
+    $("count").textContent=people.length;
+  }
+  function totals(){
+    var attn=0,paid=0;
+    people.forEach(function(p){ if(p.attend){ attn++; if(p.paid)paid++; } });
+    return {attn:attn, paid:paid, expected:attn*fee, collected:paid*fee, remain:(attn-paid)*fee};
+  }
+  function render(){
+    renderList();
+    var t=totals();
+    $("collected").textContent=yen(t.collected);
+    $("attn").textContent=t.attn;
+    $("expected").textContent=yen(t.expected);
+    var rem=$("remain"); rem.textContent=yen(t.remain); rem.className=t.remain===0?"ok":"";
+  }
+  function shareText(){
+    var t=totals(); var lines=["【出欠・集金状況】会費 "+yen(fee)];
+    people.forEach(function(p){ lines.push((p.attend?(p.paid?"✅":"⬜"):"❌")+" "+(p.name||"（名前なし）")+(p.attend?(p.paid?"（集金済）":"（未回収）"):"（不参加）")); });
+    lines.push("参加"+t.attn+"人／回収 "+yen(t.collected)+"／未回収 "+yen(t.remain));
+    lines.push("— 幹事の道具箱"); return lines.join("\n");
+  }
+  function toast(msg){var el=$("toast");el.textContent=msg;el.classList.add("show");setTimeout(function(){el.classList.remove("show");},1600);}
+
+  $("fee").addEventListener("input",function(){ fee=parseAmt(this.value); this.value=fee?fee.toLocaleString("ja-JP"):""; save(); render(); });
+  $("plus").onclick=function(){ if(people.length<40){ people.push({name:"",attend:true,paid:false}); save(); render(); } };
+  $("minus").onclick=function(){ if(people.length>1){ people.pop(); save(); render(); } };
+  $("copy").onclick=function(){ var tx=shareText(); if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(tx).then(function(){toast("コピーしました");},function(){toast("コピーしました");});}else{var ta=document.createElement("textarea");ta.value=tx;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");}catch(e){}document.body.removeChild(ta);toast("コピーしました");} };
+  $("line").onclick=function(){ window.open("https://line.me/R/msg/text/?"+encodeURIComponent(shareText()),"_blank"); };
+
+  $("fee").value=fee?fee.toLocaleString("ja-JP"):"";
+  render();
+})();
+</script>
+</body>
+</html>

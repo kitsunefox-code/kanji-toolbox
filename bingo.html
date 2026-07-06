@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ビンゴ抽選機｜1〜75の数字をボタンで抽選・忘年会や宴会に｜幹事の道具箱</title>
+<meta name="description" content="ボタンを押すだけで1〜75の数字を重複なく抽選するビンゴマシン。出た数字はボードで一目、直前の数字も大きく表示。忘年会・新年会・二次会のビンゴ大会に。自動保存・登録不要・無料。">
+<meta name="theme-color" content="#1b2a4a">
+<meta property="og:title" content="ビンゴ抽選機">
+<meta property="og:description" content="ボタンを押すだけで1〜75を重複なく抽選。宴会のビンゴ大会に。">
+<link rel="canonical" href="https://kusayakyu-navi.com/kanji-toolbox/bingo.html">
+<link rel="stylesheet" href="styles.css">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6423402285554400" crossorigin="anonymous"></script>
+</head>
+<body>
+<div class="app has-bar">
+  <header class="masthead tool">
+    <a class="back" href="index.html" aria-label="道具箱にもどる">‹</a>
+    <div class="brand-mark"><span class="kan">B</span>ビンゴ抽選機</div>
+  </header>
+
+  <main>
+    <section class="panel">
+      <div class="bingo-current">
+        <span class="bingo-letter" id="letter">READY</span>
+        <span class="bingo-num empty" id="num">スタート</span>
+      </div>
+      <div class="bingo-count" id="count">残り 75 個</div>
+    </section>
+
+    <section class="panel">
+      <h2>出た数字</h2>
+      <div class="bingo-grid" id="grid"></div>
+      <div class="bingo-hist" id="hist"></div>
+    </section>
+  </main>
+
+  <footer>
+    <h3>ビンゴ抽選機とは</h3>
+    <p>ボタンを押すだけで1〜75の数字を重複なくランダムに抽選する、ビンゴ大会用のツールです。出た数字はB・I・N・G・Oの列に色分けされたボードに記録され、直前に出た数字は大きく表示されます。忘年会・新年会・歓送迎会・二次会の景品ビンゴにそのまま使えます。抽選の途中経過は自動保存され、ページを閉じても続きから再開できます。</p>
+    <div class="links"><a href="index.html">← ほかの幹事ツール</a></div>
+  </footer>
+</div>
+
+<div class="settle">
+  <div class="settle-actions">
+    <button type="button" class="btn gold" id="draw" style="flex:2">🎱 数字を出す</button>
+    <button type="button" class="btn ghost" id="reset" style="flex:1">リセット</button>
+  </div>
+</div>
+<div class="toast" id="toast">リセットしました</div>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  var KEY="kanjitools_bingo_v1";
+  var LETTERS=["B","I","N","G","O"];
+  var drawn=[]; // order of drawn numbers
+  try{ var s=JSON.parse(localStorage.getItem(KEY)); if(s&&Array.isArray(s.drawn))drawn=s.drawn; }catch(e){}
+
+  function save(){ try{localStorage.setItem(KEY,JSON.stringify({drawn:drawn}));}catch(e){} }
+  function letterOf(n){ return LETTERS[Math.floor((n-1)/15)]; }
+
+  function buildGrid(){
+    var g=$("grid"); g.innerHTML="";
+    for(var n=1;n<=75;n++){ var d=document.createElement("div"); d.className="bingo-cell"; d.id="c"+n; d.textContent=n; g.appendChild(d); }
+  }
+  function render(){
+    // grid
+    for(var n=1;n<=75;n++){ var c=$("c"+n); if(!c)continue; c.className="bingo-cell"+(drawn.indexOf(n)>=0?" hit":""); }
+    var last=drawn[drawn.length-1];
+    if(last){ var lc=$("c"+last); if(lc)lc.className="bingo-cell last"; }
+    // current
+    if(last){ $("letter").textContent=letterOf(last); $("num").textContent=last; $("num").className="bingo-num"; }
+    else{ $("letter").textContent="READY"; $("num").textContent="スタート"; $("num").className="bingo-num empty"; }
+    $("count").textContent="残り "+(75-drawn.length)+" 個 ／ 出た "+drawn.length+" 個";
+    // history (recent first, up to 12)
+    var h=$("hist"); h.innerHTML="";
+    drawn.slice().reverse().slice(0,12).forEach(function(n){ var sp=document.createElement("span"); sp.textContent=letterOf(n)+" "+n; h.appendChild(sp); });
+    $("draw").disabled = drawn.length>=75;
+    $("draw").textContent = drawn.length>=75 ? "全部出ました" : "🎱 数字を出す";
+  }
+  function draw(){
+    if(drawn.length>=75) return;
+    var pool=[]; for(var n=1;n<=75;n++){ if(drawn.indexOf(n)<0) pool.push(n); }
+    var pick=pool[Math.floor(Math.random()*pool.length)];
+    drawn.push(pick); save(); render();
+    // little pop on the number
+    var el=$("num"); el.style.animation="none"; void el.offsetWidth; el.style.animation="pop .35s ease both";
+  }
+  function toast(msg){var t=$("toast");t.textContent=msg;t.classList.add("show");setTimeout(function(){t.classList.remove("show");},1600);}
+
+  $("draw").onclick=draw;
+  $("reset").onclick=function(){ if(drawn.length && !confirm("出た数字をすべてリセットします。よろしいですか？"))return; drawn=[]; save(); render(); toast("リセットしました"); };
+
+  buildGrid(); render();
+})();
+</script>
+</body>
+</html>
