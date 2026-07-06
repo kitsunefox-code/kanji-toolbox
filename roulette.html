@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>罰ゲームルーレット｜お題を入れて回すだけ・宴会が盛り上がる｜幹事の道具箱</title>
+<meta name="description" content="罰ゲームやお題を入力して回すだけの無料ルーレット。飲み会・宴会・二次会の一発芸決めや順番決めに。項目は自由に追加、スマホでそのまま使えて登録不要。">
+<meta name="theme-color" content="#1b2a4a">
+<meta property="og:title" content="罰ゲームルーレット">
+<meta property="og:description" content="お題や罰ゲームを入れて回すだけ。宴会がひと盛り上がり。">
+<link rel="canonical" href="https://kitsunefox-code.github.io/kanji-toolbox/roulette.html">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app has-bar">
+  <header class="masthead tool">
+    <a class="back" href="index.html" aria-label="道具箱にもどる">‹</a>
+    <div class="brand-mark"><span class="kan">罰</span>罰ゲームルーレット</div>
+  </header>
+
+  <main>
+    <section class="panel">
+      <div class="wheel-wrap">
+        <div class="pointer"></div>
+        <canvas id="wheel" width="280" height="280"></canvas>
+        <div class="hub-dot" id="hub">回す</div>
+      </div>
+      <p class="winner" id="winner"></p>
+    </section>
+
+    <section class="panel">
+      <label class="field-label" for="items">項目（1行に1つ）</label>
+      <textarea id="items" class="items-area" spellcheck="false" aria-label="ルーレットの項目">一発ギャグ
+モノマネ
+好きな人を暴露
+乾杯の音頭
+今日の会計おごり
+スルー（セーフ）</textarea>
+      <div class="chip-row" id="presets">
+        <button type="button" class="chip" data-set="一発ギャグ&#10;モノマネ&#10;好きな人を暴露&#10;乾杯の音頭&#10;今日の会計おごり&#10;スルー（セーフ）">🍺 罰ゲーム</button>
+        <button type="button" class="chip" data-set="最近ハマってるもの&#10;初恋の話&#10;休日の過ごし方&#10;推しを語る&#10;最近の失敗談&#10;マイブーム">💬 トークのお題</button>
+        <button type="button" class="chip" data-set="1番&#10;2番&#10;3番&#10;4番&#10;5番&#10;6番">🔢 順番決め</button>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <h3>罰ゲームルーレットとは</h3>
+    <p>罰ゲームやトークのお題、順番などを入力してルーレットを回すだけのシンプルなツールです。飲み会・宴会・二次会の一発芸決め、席順・発表順決め、ちょっとしたゲームの当番決めに。項目は自由に増減でき、スマホでもPCでもそのまま使えます。</p>
+    <div class="links"><a href="index.html">← ほかの幹事ツール</a></div>
+  </footer>
+</div>
+
+<div class="settle">
+  <div class="settle-actions">
+    <button type="button" class="btn gold" id="spin" style="flex:2">🎯 ルーレットを回す</button>
+    <button type="button" class="btn line" id="line" style="flex:1">結果をLINE</button>
+  </div>
+</div>
+<div class="toast" id="toast">コピーしました</div>
+
+<script>
+(function(){
+  var TAU=Math.PI*2, POINTER=3*Math.PI/2;
+  var COLORS=["#1b2a4a","#c88a3a","#2f6f5b","#8a4a6f","#3a5a8a","#b5722b","#5a3a7a","#2a6a7a","#7a5a2a","#4a6a3a"];
+  var $=function(id){return document.getElementById(id)};
+  var cv=$("wheel"), ctx=cv.getContext("2d");
+  var dpr=Math.max(1,Math.min(3,window.devicePixelRatio||1));
+  var SIZE=280, R=SIZE/2;
+  cv.width=SIZE*dpr; cv.height=SIZE*dpr; ctx.scale(dpr,dpr);
+  var rot=0, spinning=false, lastWinner="";
+
+  function items(){return $("items").value.split(/\n/).map(function(s){return s.trim();}).filter(function(s){return s.length;});}
+
+  function draw(){
+    var list=items(); ctx.clearRect(0,0,SIZE,SIZE);
+    if(!list.length){ ctx.fillStyle="#eef0f4"; ctx.beginPath(); ctx.arc(R,R,R-2,0,TAU); ctx.fill(); return; }
+    var seg=TAU/list.length;
+    for(var i=0;i<list.length;i++){
+      var a0=rot+i*seg, a1=a0+seg;
+      ctx.beginPath(); ctx.moveTo(R,R); ctx.arc(R,R,R-2,a0,a1); ctx.closePath();
+      ctx.fillStyle=COLORS[i%COLORS.length]; ctx.fill();
+      ctx.strokeStyle="rgba(255,255,255,.5)"; ctx.lineWidth=1.5; ctx.stroke();
+      // label
+      ctx.save();
+      ctx.translate(R,R); ctx.rotate(a0+seg/2);
+      ctx.textAlign="right"; ctx.textBaseline="middle";
+      ctx.fillStyle="#fff"; ctx.font="700 13px 'Hiragino Kaku Gothic ProN','Yu Gothic',sans-serif";
+      var label=list[i]; if(label.length>8)label=label.slice(0,7)+"…";
+      ctx.fillText(label, R-16, 0);
+      ctx.restore();
+    }
+  }
+
+  function winnerIndex(){
+    var list=items(); if(!list.length)return -1;
+    var seg=TAU/list.length;
+    var rel=((POINTER-rot)%TAU+TAU)%TAU;
+    return Math.floor(rel/seg)%list.length;
+  }
+
+  function easeOut(t){return 1-Math.pow(1-t,3);}
+  function spin(){
+    var list=items(); if(spinning||!list.length)return;
+    spinning=true; $("winner").textContent=""; $("hub").textContent="…";
+    var start=rot;
+    var target=rot + TAU*(5+Math.random()*2) + Math.random()*TAU;
+    var dur=4200, t0=performance.now();
+    function frame(now){
+      var p=Math.min(1,(now-t0)/dur);
+      rot=start+(target-start)*easeOut(p);
+      draw();
+      if(p<1){requestAnimationFrame(frame);}
+      else{
+        spinning=false; $("hub").textContent="回す";
+        var idx=winnerIndex();
+        lastWinner=list[idx]||"";
+        var w=$("winner"); w.textContent="▶ "+lastWinner;
+        w.style.animation="none"; void w.offsetWidth; w.style.animation="pop .4s ease both";
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+  function toast(msg){var t=$("toast");t.textContent=msg;t.classList.add("show");setTimeout(function(){t.classList.remove("show");},1600);}
+
+  $("items").addEventListener("input",function(){if(!spinning)draw();});
+  $("presets").addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;$("items").value=b.dataset.set;draw();$("winner").textContent="";});
+  $("spin").onclick=spin;
+  $("hub").onclick=spin;
+  cv.style.cursor="pointer"; cv.onclick=spin;
+  $("line").onclick=function(){ if(!lastWinner){toast("先に回してね");return;} window.open("https://line.me/R/msg/text/?"+encodeURIComponent("【ルーレットの結果】"+lastWinner+"\n— 幹事の道具箱"),"_blank"); };
+
+  draw();
+})();
+</script>
+</body>
+</html>

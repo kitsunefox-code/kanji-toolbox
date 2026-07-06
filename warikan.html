@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>傾斜割り勘 計算ツール｜先輩は多め・幹事は端数負担で自動計算｜幹事の道具箱</title>
+<meta name="description" content="飲み会の割り勘を、先輩は多め・後輩は少なめの傾斜配分で自動計算。100円単位のまるめ、幹事が端数を負担する設定に対応。結果はワンタップでLINE共有。登録不要・無料。">
+<meta name="theme-color" content="#1b2a4a">
+<meta property="og:title" content="傾斜割り勘 計算ツール">
+<meta property="og:description" content="先輩は多め・後輩は少なめ。幹事が端数を負担する傾斜割り勘を自動計算。">
+<link rel="canonical" href="https://kitsunefox-code.github.io/kanji-toolbox/warikan.html">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app has-bar">
+  <header class="masthead tool">
+    <a class="back" href="index.html" aria-label="道具箱にもどる">‹</a>
+    <div class="brand-mark"><span class="kan">割</span>傾斜わりかん</div>
+  </header>
+
+  <main>
+    <section class="panel">
+      <label class="field-label" for="total">会計の合計金額</label>
+      <div class="amount-input"><span class="yen">¥</span><input id="total" type="text" inputmode="numeric" autocomplete="off" value="24,000"></div>
+      <div class="rounding-row"><span class="field-label sm">端数のまるめ</span>
+        <div class="seg" id="unit">
+          <button type="button" data-unit="1000">1000</button>
+          <button type="button" data-unit="500">500</button>
+          <button type="button" class="on" data-unit="100">100</button>
+          <button type="button" data-unit="1">1円</button>
+        </div>
+      </div>
+    </section>
+    <section class="panel">
+      <div class="panel-head"><h2>メンバー</h2>
+        <div class="count-ctrl"><button type="button" id="minus" aria-label="人数を減らす">−</button><span id="count">4</span><button type="button" id="plus" aria-label="人数を増やす">＋</button></div>
+      </div>
+      <ul class="people" id="people"></ul>
+      <p class="hint">👑 が「幹事」。各メンバーの「少なめ／ふつう／多め」で傾斜をつけられます。幹事は自分の傾斜ぶんに加えて端数も引き受けるので、集金はいつもぴったりです。</p>
+    </section>
+    <section class="panel">
+      <h2>ひとりずつの金額</h2>
+      <ul class="results" id="results"></ul>
+    </section>
+  </main>
+
+  <footer>
+    <h3>傾斜割り勘とは</h3>
+    <p>飲み会や歓送迎会で「先輩や上司は多めに、後輩や新人は少なめに」と金額に差をつける割り勘の方法です。合計金額を入れるだけで各メンバーの傾斜に応じた金額を自動計算し、生じた端数は幹事がまとめて負担するので集金は常にぴったり。結果はLINEでそのまま共有できます。</p>
+    <div class="links"><a href="index.html">← ほかの幹事ツール</a></div>
+  </footer>
+</div>
+
+<div class="settle" id="settle">
+  <div class="settle-line"><span>集金の合計</span><strong id="collected">¥0</strong></div>
+  <div class="settle-line sub"><span id="diffLabel">集金チェック</span><span id="diff">¥0</span></div>
+  <div class="settle-actions">
+    <button type="button" class="btn ghost" id="copy" style="flex:1">結果をコピー</button>
+    <button type="button" class="btn line" id="line" style="flex:1">LINEで送る</button>
+  </div>
+</div>
+<div class="toast" id="toast">コピーしました</div>
+
+<script>
+(function(){
+  var LEVELS=[{key:"low",label:"少なめ",w:0.7},{key:"mid",label:"ふつう",w:1.0},{key:"high",label:"多め",w:1.3}];
+  var NAMES=["幹事","Aさん","Bさん","Cさん","Dさん","Eさん","Fさん","Gさん","Hさん","Iさん","Jさん","Kさん"];
+  var people=[{name:"幹事",level:"mid",kanji:true},{name:"Aさん",level:"high",kanji:false},{name:"Bさん",level:"mid",kanji:false},{name:"Cさん",level:"low",kanji:false}];
+  var unit=100;
+  var $=function(id){return document.getElementById(id)};
+  function yen(n){return "¥"+Math.round(n).toLocaleString("ja-JP");}
+  function parseAmt(v){return parseInt(String(v).replace(/[^\d]/g,""),10)||0;}
+  function ceilTo(n,u){return u<=1?Math.round(n):Math.ceil(n/u)*u;}
+  function levelW(k){for(var i=0;i<LEVELS.length;i++)if(LEVELS[i].key===k)return LEVELS[i].w;return 1;}
+  function levelLabel(k){for(var i=0;i<LEVELS.length;i++)if(LEVELS[i].key===k)return LEVELS[i].label;return "";}
+  function compute(){
+    var total=parseAmt($("total").value);
+    var kanji=people.filter(function(p){return p.kanji;});
+    // 幹事も自分の傾斜ぶんを負担する。重みは全員で按分し、端数だけ幹事が吸収する。
+    var sumW=people.reduce(function(a,p){return a+levelW(p.level);},0)||1;
+    var out=people.map(function(p){return {p:p,amt:0};});
+    if(kanji.length===0){
+      var collected=0;
+      out.forEach(function(o){o.amt=ceilTo(total*levelW(o.p.level)/sumW,unit);collected+=o.amt;});
+      return {out:out,collected:collected,kanjiAmt:null,surplus:collected-total,total:total};
+    }
+    var othersTotal=0;
+    out.forEach(function(o){if(o.p.kanji)return;o.amt=ceilTo(total*levelW(o.p.level)/sumW,unit);othersTotal+=o.amt;});
+    var kanjiAmt=total-othersTotal;
+    out.forEach(function(o){if(o.p.kanji)o.amt=kanjiAmt;});
+    return {out:out,collected:othersTotal+kanjiAmt,kanjiAmt:kanjiAmt,surplus:0,total:total};
+  }
+  function renderPeople(){
+    var ul=$("people");ul.innerHTML="";
+    people.forEach(function(p){
+      var li=document.createElement("li");li.className="person";
+      var star=document.createElement("button");star.type="button";star.className="kanji-btn"+(p.kanji?" on":"");star.textContent="👑";star.setAttribute("aria-label",p.kanji?"幹事":"幹事にする");
+      star.onclick=function(){people.forEach(function(q){q.kanji=false;});p.kanji=true;render();};
+      li.appendChild(star);
+      var name=document.createElement("input");name.className="name";name.type="text";name.value=p.name;name.setAttribute("aria-label","名前");
+      name.oninput=function(){p.name=name.value;};
+      li.appendChild(name);
+      var lvl=document.createElement("div");lvl.className="lvl";
+      LEVELS.forEach(function(L){var b=document.createElement("button");b.type="button";b.textContent=L.label;if(p.level===L.key)b.className="on";b.onclick=function(){p.level=L.key;render();};lvl.appendChild(b);});
+      li.appendChild(lvl);
+      if(p.kanji){var note=document.createElement("span");note.className="kanji-note";note.style.flex="0 0 auto";note.textContent="＋端数";note.title="端数を負担します";li.appendChild(note);}
+      ul.appendChild(li);
+    });
+    $("count").textContent=people.length;
+  }
+  function render(){
+    renderPeople();var r=compute();var ul=$("results");ul.innerHTML="";
+    r.out.forEach(function(o){
+      var li=document.createElement("li");li.className="res"+(o.p.kanji?" is-kanji":"");
+      var who=document.createElement("div");who.className="who";who.textContent=o.p.name||"（名前なし）";
+      var tag=document.createElement("span");tag.className="tag";tag.textContent=o.p.kanji?"幹事":levelLabel(o.p.level);who.appendChild(tag);
+      var amt=document.createElement("span");amt.className="amt"+(o.amt<0?" neg":"");amt.textContent=o.amt<0?"受取 "+yen(-o.amt):yen(o.amt);
+      li.appendChild(who);li.appendChild(amt);ul.appendChild(li);
+    });
+    $("collected").textContent=yen(r.collected);
+    if(r.kanjiAmt===null){$("diffLabel").textContent="まるめの余り";$("diff").innerHTML=r.surplus>0?'<b class="ok">+'+yen(r.surplus).slice(1)+' 余る</b>':'<b class="ok">ぴったり</b>';}
+    else{$("diffLabel").textContent="集金チェック";$("diff").innerHTML='<b class="ok">✓ 会費ぴったり</b>';}
+  }
+  function shareText(){
+    var r=compute();var lines=["【傾斜わりかん】合計 "+yen(r.total)];
+    r.out.forEach(function(o){var amt=o.amt<0?"受取 "+yen(-o.amt):yen(o.amt);lines.push("・"+(o.p.name||"（名前なし）")+(o.p.kanji?"（幹事）":"")+"　"+amt);});
+    lines.push("— 幹事の道具箱");return lines.join("\n");
+  }
+  function toast(msg){var t=$("toast");t.textContent=msg;t.classList.add("show");setTimeout(function(){t.classList.remove("show");},1600);}
+  $("total").addEventListener("input",function(){var v=parseAmt(this.value);this.value=v?v.toLocaleString("ja-JP"):"";render();});
+  $("unit").addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;unit=parseInt(b.dataset.unit,10);[].forEach.call(this.children,function(c){c.classList.toggle("on",c===b);});render();});
+  $("plus").onclick=function(){if(people.length<12){people.push({name:NAMES[people.length]||("メンバー"+(people.length+1)),level:"mid",kanji:false});render();}};
+  $("minus").onclick=function(){if(people.length>1){var rem=people.pop();if(rem.kanji&&people.length){people[0].kanji=true;}render();}};
+  $("copy").onclick=function(){var t=shareText();if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(function(){toast("コピーしました");},function(){toast("コピーしました");});}else{var ta=document.createElement("textarea");ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");}catch(e){}document.body.removeChild(ta);toast("コピーしました");}};
+  $("line").onclick=function(){window.open("https://line.me/R/msg/text/?"+encodeURIComponent(shareText()),"_blank");};
+  render();
+})();
+</script>
+</body>
+</html>

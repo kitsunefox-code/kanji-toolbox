@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>チーム分け・席替えジェネレータ｜名前を貼るだけで公平にシャッフル｜幹事の道具箱</title>
+<meta name="description" content="名前を貼り付けるだけで、指定した数のチームに公平にランダム分け。飲み会の席替え、班分け、対戦相手決めに。人数・チーム数は自由、結果はLINE共有。登録不要・無料。">
+<meta name="theme-color" content="#1b2a4a">
+<meta property="og:title" content="チーム分け・席替えジェネレータ">
+<meta property="og:description" content="名前を貼るだけで公平にシャッフル。班分け・席替え・対戦決めに。">
+<link rel="canonical" href="https://kitsunefox-code.github.io/kanji-toolbox/team.html">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app has-bar">
+  <header class="masthead tool">
+    <a class="back" href="index.html" aria-label="道具箱にもどる">‹</a>
+    <div class="brand-mark"><span class="kan">組</span>チーム分け・席替え</div>
+  </header>
+
+  <main>
+    <section class="panel">
+      <label class="field-label" for="names">メンバーの名前（1行に1人）</label>
+      <textarea id="names" class="names-area" spellcheck="false" aria-label="メンバーの名前">田中
+佐藤
+鈴木
+高橋
+渡辺
+伊藤
+山本
+中村</textarea>
+      <div class="mode-row">
+        <div class="seg" id="mode">
+          <button type="button" class="on" data-mode="teams">チーム数で分ける</button>
+          <button type="button" data-mode="size">人数で分ける</button>
+        </div>
+        <div class="count-ctrl"><button type="button" id="minus" aria-label="減らす">−</button><span id="count">2</span><button type="button" id="plus" aria-label="増やす">＋</button></div>
+      </div>
+      <p class="hint" id="modeHint">メンバーを 2 チームに、なるべく均等に分けます。</p>
+    </section>
+
+    <section class="panel">
+      <h2>分けた結果</h2>
+      <div class="teams" id="teams"></div>
+    </section>
+  </main>
+
+  <footer>
+    <h3>チーム分け・席替えジェネレータとは</h3>
+    <p>参加者の名前を貼り付けて「シャッフル」を押すだけで、指定したチーム数（または1チームあたりの人数）に、かたよりなくランダムに振り分けます。飲み会の席替え、社内イベントの班分け、ゲームの対戦相手決めなどに。人数が割り切れない場合も自動でなるべく均等に配分します。</p>
+    <div class="links"><a href="index.html">← ほかの幹事ツール</a></div>
+  </footer>
+</div>
+
+<div class="settle">
+  <div class="settle-actions">
+    <button type="button" class="btn primary" id="shuffle" style="flex:2">🎲 シャッフル</button>
+    <button type="button" class="btn ghost" id="copy" style="flex:1">コピー</button>
+    <button type="button" class="btn line" id="line" style="flex:1">LINE</button>
+  </div>
+</div>
+<div class="toast" id="toast">コピーしました</div>
+
+<script>
+(function(){
+  var mode="teams", n=2;
+  var COLORS=["#1b2a4a","#2f6f5b","#8a4a6f","#b5722b","#3a5a8a","#7a5a2a","#5a3a7a","#2a6a7a"];
+  var $=function(id){return document.getElementById(id)};
+  var result=[];
+
+  function names(){return $("names").value.split(/\n/).map(function(s){return s.trim();}).filter(function(s){return s.length;});}
+  function shuffleArr(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+
+  function split(){
+    var list=shuffleArr(names().slice());
+    if(!list.length) return [];
+    var groups;
+    if(mode==="teams"){
+      var t=Math.max(1,Math.min(n,list.length));
+      groups=[];for(var i=0;i<t;i++)groups.push([]);
+      list.forEach(function(name,idx){groups[idx%t].push(name);});
+    }else{
+      var size=Math.max(1,n);
+      groups=[];for(var k=0;k<list.length;k+=size){groups.push(list.slice(k,k+size));}
+    }
+    return groups;
+  }
+
+  function render(animate){
+    result=split();
+    var wrap=$("teams");wrap.innerHTML="";
+    if(!result.length){wrap.innerHTML='<p class="hint" style="margin:0">名前を入力してください。</p>';return;}
+    result.forEach(function(g,i){
+      var box=document.createElement("div");box.className="team";
+      if(animate)box.style.animationDelay=(i*0.06)+"s"; else box.style.animation="none";
+      var head=document.createElement("div");head.className="team-head";head.style.background=COLORS[i%COLORS.length];
+      head.innerHTML='<span>チーム '+(i+1)+'</span><span class="cnt">'+g.length+'人</span>';
+      var ul=document.createElement("ul");
+      g.forEach(function(name){var li=document.createElement("li");li.textContent=name;ul.appendChild(li);});
+      box.appendChild(head);box.appendChild(ul);wrap.appendChild(box);
+    });
+  }
+
+  function updateHint(){
+    $("count").textContent=n;
+    $("modeHint").textContent = mode==="teams"
+      ? "メンバーを "+n+" チームに、なるべく均等に分けます。"
+      : "1チーム "+n+" 人ずつに区切って分けます。";
+  }
+  function shareText(){
+    if(!result.length) return "";
+    var lines=["【チーム分け】"];
+    result.forEach(function(g,i){lines.push("■チーム"+(i+1)+"："+g.join("、"));});
+    lines.push("— 幹事の道具箱");return lines.join("\n");
+  }
+  function toast(msg){var t=$("toast");t.textContent=msg;t.classList.add("show");setTimeout(function(){t.classList.remove("show");},1600);}
+
+  $("mode").addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;mode=b.dataset.mode;[].forEach.call(this.children,function(c){c.classList.toggle("on",c===b);});updateHint();render(true);});
+  $("plus").onclick=function(){if(n<20){n++;updateHint();render(true);}};
+  $("minus").onclick=function(){if(n>1){n--;updateHint();render(true);}};
+  $("names").addEventListener("input",function(){render(false);});
+  $("shuffle").onclick=function(){render(true);};
+  $("copy").onclick=function(){var t=shareText();if(!t){toast("先にシャッフル");return;}if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(function(){toast("コピーしました");},function(){toast("コピーしました");});}else{var ta=document.createElement("textarea");ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");}catch(e){}document.body.removeChild(ta);toast("コピーしました");}};
+  $("line").onclick=function(){var t=shareText();if(!t){toast("先にシャッフル");return;}window.open("https://line.me/R/msg/text/?"+encodeURIComponent(t),"_blank");};
+
+  updateHint();render(true);
+})();
+</script>
+</body>
+</html>
