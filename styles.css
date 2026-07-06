@@ -121,6 +121,31 @@ footer .links a{color:var(--ai-soft);text-decoration:none;font-weight:700}
 .team li{background:#faf8f3;border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:13.5px;font-weight:700}
 @keyframes pop{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
 
+/* ===== kaihi (会費) ===== */
+.two-col{display:flex;gap:10px}
+.two-col .col{flex:1}
+.mini-amt{display:flex;align-items:center;gap:4px;border-bottom:2px solid var(--ai);padding-bottom:5px}
+.mini-amt .yen{font-size:17px;font-weight:800;color:var(--ai-soft)}
+.mini-amt input{border:0;outline:0;background:transparent;width:100%;min-width:0;font-family:var(--font);font-size:23px;font-weight:800;color:var(--ink);font-variant-numeric:tabular-nums}
+.gender-row{display:flex;gap:10px;margin-top:14px}
+.gender-row .g{flex:1;border:1px solid var(--line);border-radius:11px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between}
+.gender-row .g .lab{font-size:13px;font-weight:700;color:var(--ink-mute)}
+
+/* ===== amida (あみだくじ) ===== */
+.amida-wrap{overflow-x:auto;padding:6px 0 2px}
+.amida-wrap canvas{display:block;margin:0 auto;cursor:pointer}
+.amida-map{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:7px}
+.amida-map li{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 13px;border-radius:10px;background:#faf8f3;border:1px solid var(--line);font-size:14px;font-weight:700}
+.amida-map li .arrow{color:var(--gold);font-weight:800}
+.amida-map li .to{color:var(--ai)}
+
+/* ===== junban (順番決め) ===== */
+.rank-list{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:8px}
+.rank{display:flex;align-items:center;gap:12px;padding:11px 13px;border-radius:11px;background:#faf8f3;border:1px solid var(--line);animation:pop .35s ease both}
+.rank .no{flex:0 0 auto;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-weight:900;color:#fff;background:var(--ai);font-size:14px;font-variant-numeric:tabular-nums}
+.rank.top1 .no{background:var(--gold-bright);color:var(--ai-deep)}
+.rank .nm{font-weight:700;font-size:15px}
+
 /* ===== roulette ===== */
 .wheel-wrap{position:relative;width:280px;height:280px;margin:6px auto 2px}
 .wheel-wrap canvas{width:280px;height:280px;border-radius:50%;box-shadow:0 10px 30px rgba(18,32,60,.18),0 0 0 8px #fff,0 0 0 10px var(--line)}

@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>順番決めツール｜発表順・席順をランダムに公平に決める｜幹事の道具箱</title>
+<meta name="description" content="名前を入れてボタンを押すだけで、発表順・席順・順番をランダムに決定。飲み会の挨拶順、プレゼンの発表順、ゲームの手番決めに。結果はLINE共有。登録不要・無料。">
+<meta name="theme-color" content="#1b2a4a">
+<meta property="og:title" content="順番決めツール">
+<meta property="og:description" content="名前を入れて押すだけ。発表順・席順を公平にランダム決定。">
+<link rel="canonical" href="https://kusayakyu-navi.com/kanji-toolbox/junban.html">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app has-bar">
+  <header class="masthead tool">
+    <a class="back" href="index.html" aria-label="道具箱にもどる">‹</a>
+    <div class="brand-mark"><span class="kan">順</span>順番決め</div>
+  </header>
+
+  <main>
+    <section class="panel">
+      <label class="field-label" for="names">メンバーの名前（1行に1人）</label>
+      <textarea id="names" class="names-area" spellcheck="false" aria-label="メンバーの名前">田中
+佐藤
+鈴木
+高橋
+渡辺</textarea>
+    </section>
+    <section class="panel">
+      <h2>順番</h2>
+      <ol class="rank-list" id="ranks"></ol>
+    </section>
+  </main>
+
+  <footer>
+    <h3>順番決めツールとは</h3>
+    <p>参加者の名前を入力して「順番を決める」を押すだけで、公平なランダム順に並べ替えます。飲み会の挨拶・スピーチの順番、プレゼンや発表の順、ゲームの手番決め、順位決めなどに。結果はLINEでそのまま共有できます。</p>
+    <div class="links"><a href="index.html">← ほかの幹事ツール</a></div>
+  </footer>
+</div>
+
+<div class="settle">
+  <div class="settle-actions">
+    <button type="button" class="btn primary" id="go" style="flex:2">🎲 順番を決める</button>
+    <button type="button" class="btn ghost" id="copy" style="flex:1">コピー</button>
+    <button type="button" class="btn line" id="line" style="flex:1">LINE</button>
+  </div>
+</div>
+<div class="toast" id="toast">コピーしました</div>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  var order=[];
+  function names(){return $("names").value.split(/\n/).map(function(s){return s.trim();}).filter(function(s){return s.length;});}
+  function shuffleArr(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+  function render(animate){
+    var ol=$("ranks");ol.innerHTML="";
+    if(!order.length){ol.innerHTML='<p class="hint" style="margin:0">名前を入力して「順番を決める」を押してください。</p>';return;}
+    order.forEach(function(nm,i){
+      var li=document.createElement("li");li.className="rank"+(i===0?" top1":"");
+      if(animate)li.style.animationDelay=(i*0.07)+"s"; else li.style.animation="none";
+      var no=document.createElement("span");no.className="no";no.textContent=(i+1);
+      var name=document.createElement("span");name.className="nm";name.textContent=nm;
+      li.appendChild(no);li.appendChild(name);ol.appendChild(li);
+    });
+  }
+  function decide(){order=shuffleArr(names().slice());render(true);}
+  function shareText(){if(!order.length)return "";var lines=["【順番決め】"];order.forEach(function(nm,i){lines.push((i+1)+". "+nm);});lines.push("— 幹事の道具箱");return lines.join("\n");}
+  function toast(msg){var t=$("toast");t.textContent=msg;t.classList.add("show");setTimeout(function(){t.classList.remove("show");},1600);}
+  $("go").onclick=decide;
+  $("copy").onclick=function(){var t=shareText();if(!t){toast("先に順番を決めてね");return;}if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(function(){toast("コピーしました");},function(){toast("コピーしました");});}else{var ta=document.createElement("textarea");ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");}catch(e){}document.body.removeChild(ta);toast("コピーしました");}};
+  $("line").onclick=function(){var t=shareText();if(!t){toast("先に順番を決めてね");return;}window.open("https://line.me/R/msg/text/?"+encodeURIComponent(t),"_blank");};
+  decide();
+})();
+</script>
+</body>
+</html>

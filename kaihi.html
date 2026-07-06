@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>会費シミュレータ｜一次会＋二次会・男女別の会費を自動計算｜幹事の道具箱</title>
+<meta name="description" content="一次会と二次会の費用、参加人数を入れるだけで、ひとりあたりの会費を自動計算。男女で金額に差をつける設定、500円単位のまるめ、幹事プール（余り）の表示に対応。登録不要・無料。">
+<meta name="theme-color" content="#1b2a4a">
+<meta property="og:title" content="会費シミュレータ">
+<meta property="og:description" content="一次会＋二次会・男女別の会費をサッと計算。幹事プールも表示。">
+<link rel="canonical" href="https://kusayakyu-navi.com/kanji-toolbox/kaihi.html">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app has-bar">
+  <header class="masthead tool">
+    <a class="back" href="index.html" aria-label="道具箱にもどる">‹</a>
+    <div class="brand-mark"><span class="kan">会</span>会費シミュレータ</div>
+  </header>
+
+  <main>
+    <section class="panel">
+      <div class="two-col">
+        <div class="col">
+          <label class="field-label" for="ichi">一次会の費用</label>
+          <div class="mini-amt"><span class="yen">¥</span><input id="ichi" type="text" inputmode="numeric" autocomplete="off" value="40,000"></div>
+        </div>
+        <div class="col">
+          <label class="field-label" for="ni">二次会の費用</label>
+          <div class="mini-amt"><span class="yen">¥</span><input id="ni" type="text" inputmode="numeric" autocomplete="off" value="20,000"></div>
+        </div>
+      </div>
+      <div class="gender-row">
+        <div class="g"><span class="lab">男性</span><div class="count-ctrl"><button type="button" data-g="m" data-d="-1" aria-label="男性を減らす">−</button><span id="mCount">6</span><button type="button" data-g="m" data-d="1" aria-label="男性を増やす">＋</button></div></div>
+        <div class="g"><span class="lab">女性</span><div class="count-ctrl"><button type="button" data-g="f" data-d="-1" aria-label="女性を減らす">−</button><span id="fCount">4</span><button type="button" data-g="f" data-d="1" aria-label="女性を増やす">＋</button></div></div>
+      </div>
+      <div class="rounding-row"><span class="field-label sm">男女の差</span>
+        <div class="seg" id="ratio">
+          <button type="button" class="on" data-m="1" data-f="1">同額</button>
+          <button type="button" data-m="1.3" data-f="0.8">男性多め</button>
+          <button type="button" data-m="1.6" data-f="0.6">しっかり差</button>
+        </div>
+      </div>
+      <div class="rounding-row"><span class="field-label sm">まるめ</span>
+        <div class="seg" id="unit">
+          <button type="button" data-unit="1000">1000</button>
+          <button type="button" class="on" data-unit="500">500</button>
+          <button type="button" data-unit="100">100</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>ひとりあたりの会費</h2>
+      <ul class="results" id="results"></ul>
+    </section>
+  </main>
+
+  <footer>
+    <h3>会費シミュレータとは</h3>
+    <p>一次会・二次会の合計費用と参加人数を入れるだけで、ひとりあたりの会費を自動計算します。男女で金額に差をつけたい場合の按分、集めやすい500円・1000円単位へのまるめ、まるめで生じた余り（幹事プール）の表示に対応。歓送迎会や忘年会の会費決めにそのまま使えます。</p>
+    <div class="links"><a href="index.html">← ほかの幹事ツール</a></div>
+  </footer>
+</div>
+
+<div class="settle" id="settle">
+  <div class="settle-line"><span>集金の合計</span><strong id="collected">¥0</strong></div>
+  <div class="settle-line sub"><span>会費総額 <b id="cost">¥0</b> ／ 幹事プール</span><span id="pool" class="ok">¥0</span></div>
+  <div class="settle-actions">
+    <button type="button" class="btn ghost" id="copy" style="flex:1">結果をコピー</button>
+    <button type="button" class="btn line" id="line" style="flex:1">LINEで送る</button>
+  </div>
+</div>
+<div class="toast" id="toast">コピーしました</div>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  var m=6,f=4,mw=1,fw=1,unit=500;
+  function yen(n){return "¥"+Math.round(n).toLocaleString("ja-JP");}
+  function parseAmt(v){return parseInt(String(v).replace(/[^\d]/g,""),10)||0;}
+  function ceilTo(n,u){return u<=1?Math.round(n):Math.ceil(n/u)*u;}
+
+  function compute(){
+    var cost=parseAmt($("ichi").value)+parseAmt($("ni").value);
+    var denom=m*mw+f*fw;
+    var base=denom>0?cost/denom:0;
+    var maleFee=m>0?ceilTo(mw*base,unit):0;
+    var femaleFee=f>0?ceilTo(fw*base,unit):0;
+    var collected=m*maleFee+f*femaleFee;
+    return {cost:cost,maleFee:maleFee,femaleFee:femaleFee,collected:collected,pool:collected-cost};
+  }
+  function render(){
+    var r=compute();var ul=$("results");ul.innerHTML="";
+    function row(label,fee,cnt,gold){
+      if(cnt<=0)return;
+      var li=document.createElement("li");li.className="res"+(gold?" is-kanji":"");
+      var who=document.createElement("div");who.className="who";who.textContent=label;
+      var tag=document.createElement("span");tag.className="tag";tag.textContent=cnt+"人";who.appendChild(tag);
+      var amt=document.createElement("span");amt.className="amt";amt.textContent=yen(fee);
+      li.appendChild(who);li.appendChild(amt);ul.appendChild(li);
+    }
+    row("男性",r.maleFee,m,false);
+    row("女性",r.femaleFee,f,true);
+    $("collected").textContent=yen(r.collected);
+    $("cost").textContent=yen(r.cost);
+    var pool=$("pool");
+    pool.className=r.pool>=0?"ok":"";
+    pool.textContent=(r.pool>=0?"+¥":"−¥")+Math.abs(r.pool).toLocaleString("ja-JP");
+  }
+  function shareText(){
+    var r=compute();var lines=["【会費】総額 "+yen(r.cost)];
+    if(m>0)lines.push("・男性 "+yen(r.maleFee)+" ×"+m+"人");
+    if(f>0)lines.push("・女性 "+yen(r.femaleFee)+" ×"+f+"人");
+    lines.push("集金 "+yen(r.collected)+"（幹事プール "+(r.pool>=0?"+":"−")+yen(Math.abs(r.pool)).slice(1)+"）");
+    lines.push("— 幹事の道具箱");return lines.join("\n");
+  }
+  function toast(msg){var t=$("toast");t.textContent=msg;t.classList.add("show");setTimeout(function(){t.classList.remove("show");},1600);}
+
+  document.querySelectorAll('.gender-row .count-ctrl button').forEach(function(b){
+    b.onclick=function(){var g=b.dataset.g,d=parseInt(b.dataset.d,10);
+      if(g==="m"){m=Math.max(0,m+d);$("mCount").textContent=m;}else{f=Math.max(0,f+d);$("fCount").textContent=f;}
+      render();};
+  });
+  $("ratio").addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;mw=parseFloat(b.dataset.m);fw=parseFloat(b.dataset.f);[].forEach.call(this.children,function(c){c.classList.toggle("on",c===b);});render();});
+  $("unit").addEventListener("click",function(e){var b=e.target.closest("button");if(!b)return;unit=parseInt(b.dataset.unit,10);[].forEach.call(this.children,function(c){c.classList.toggle("on",c===b);});render();});
+  ["ichi","ni"].forEach(function(id){$(id).addEventListener("input",function(){var v=parseAmt(this.value);this.value=v?v.toLocaleString("ja-JP"):"";render();});});
+  render();
+})();
+</script>
+</body>
+</html>
