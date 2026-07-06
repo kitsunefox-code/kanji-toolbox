@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>立て替え精算ツール｜割り勘の「誰が誰にいくら」を最小回数で計算｜幹事の道具箱</title>
+<meta name="description" content="旅行や飲み会でみんなが立て替えた金額を入れるだけで、誰が誰にいくら払えば精算できるかを最小回数で自動計算。割り勘の精算・立替の清算がその場で完了。スマホ対応・自動保存・登録不要・無料。">
+<meta name="theme-color" content="#1b2a4a">
+<meta property="og:title" content="立て替え精算ツール">
+<meta property="og:description" content="みんなが立て替えた額を入れるだけ。誰が誰にいくら払えばいいかを最小回数で計算。">
+<meta property="og:type" content="website">
+<link rel="canonical" href="https://kusayakyu-navi.com/kanji-toolbox/seisan.html">
+<link rel="stylesheet" href="styles.css">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6423402285554400" crossorigin="anonymous"></script>
+<style>
+  .pay-head{display:grid;grid-template-columns:1fr 116px 30px;gap:8px;padding:0 12px 6px;font-size:11px;color:var(--ink-mute);font-weight:700}
+  .pay-head span:nth-child(2){text-align:right}
+  .pay-row{display:grid;grid-template-columns:1fr 116px 30px;gap:8px;align-items:center;padding:8px 12px;border-radius:11px;background:#faf8f3;border:1px solid var(--line)}
+  .pay-row .mini-amt{padding-bottom:3px}
+  .pay-row .mini-amt .yen{font-size:15px}
+  .pay-row .mini-amt input{font-size:19px;text-align:right}
+  .del{border:0;background:transparent;color:var(--ink-mute);font-size:20px;cursor:pointer;line-height:1;padding:2px}
+  .del:active{color:var(--bad)}
+  .res .who b{font-weight:800}
+  .tx-arrow{color:var(--gold);font-weight:900;margin:0 4px}
+  .empty-note{font-size:13px;color:var(--ink-mute);text-align:center;padding:14px 0;font-weight:600}
+  .bal-list{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:6px}
+  .bal-list li{font-size:11.5px;font-weight:700;padding:5px 10px;border-radius:999px;border:1px solid var(--line);background:#fff}
+  .bal-list li.plus{color:var(--good);border-color:rgba(47,125,91,.3)}
+  .bal-list li.minus{color:var(--bad);border-color:rgba(182,74,60,.3)}
+</style>
+</head>
+<body>
+<div class="app has-bar">
+  <header class="masthead tool">
+    <a class="back" href="index.html" aria-label="道具箱にもどる">‹</a>
+    <div class="brand-mark"><span class="kan">精</span>立て替え精算</div>
+  </header>
+
+  <main>
+    <section class="panel">
+      <div class="panel-head"><h2>立て替えた人・金額</h2>
+        <div class="count-ctrl"><button type="button" id="minus" aria-label="減らす">−</button><span id="count">0</span><button type="button" id="plus" aria-label="増やす">＋</button></div>
+      </div>
+      <div class="pay-head"><span>名前</span><span>立て替えた額</span><span></span></div>
+      <ul class="sk-list" id="list"></ul>
+      <p class="hint">みんなで均等に割る前提で、最小回数の精算方法を計算します。立て替えていない人は 0 のままでOK。内容は自動保存されます。</p>
+    </section>
+
+    <section class="panel">
+      <h2>精算のしかた</h2>
+      <ul class="results" id="tx"></ul>
+      <ul class="bal-list" id="bal"></ul>
+    </section>
+  </main>
+
+  <footer>
+    <h3>立て替え精算ツールとは</h3>
+    <p>旅行・飲み会・イベントで、参加者それぞれが立て替えた金額を入力すると、全員で均等に割ったうえで「誰が誰にいくら払えば精算できるか」を、できるだけ少ない回数（送金の本数）で自動計算するツールです。バラバラに立て替えた費用も、この表に金額を入れるだけでその場で清算方法が決まります。計算はブラウザ内だけで行い、入力内容は自動保存されるので閉じても消えません。1円単位までぴったり合うように端数を配分します。</p>
+    <div class="related">
+      <span class="rl-label">こんな道具も</span>
+      <a href="warikan.html">🧮 傾斜わりかん</a>
+      <a href="kaihi.html">💴 会費シミュレータ</a>
+      <a href="shukkin.html">✅ 出欠・集金</a>
+    </div>
+    <div class="links"><a href="index.html">← ほかの幹事ツール</a></div>
+  </footer>
+</div>
+
+<div class="settle" id="settle">
+  <div class="settle-line"><span>立替の合計</span><strong id="total">¥0</strong></div>
+  <div class="settle-line sub"><span><b id="np">0</b>人でわりかん ／ 1人あたり</span><span id="each">¥0</span></div>
+  <div class="settle-actions" style="display:flex;gap:8px;margin-top:10px">
+    <button type="button" class="btn ghost" id="copy" style="flex:1">結果をコピー</button>
+    <button type="button" class="btn line" id="line" style="flex:1">LINEで送る</button>
+  </div>
+</div>
+<div class="toast" id="toast">コピーしました</div>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  var KEY="kanjitools_seisan_v1";
+  var people=[];
+  try{ var s=JSON.parse(localStorage.getItem(KEY)); if(s&&Array.isArray(s.people))people=s.people; }catch(e){}
+  if(!people.length){ people=[
+    {name:"田中",paid:12000},{name:"佐藤",paid:4000},
+    {name:"鈴木",paid:0},{name:"高橋",paid:8000}
+  ]; }
+
+  function yen(n){return "¥"+Math.round(n).toLocaleString("ja-JP");}
+  function parseAmt(v){return parseInt(String(v).replace(/[^\d]/g,""),10)||0;}
+  function save(){ try{localStorage.setItem(KEY,JSON.stringify({people:people}));}catch(e){} }
+  function nm(p,i){return p.name&&p.name.trim()?p.name:"メンバー"+(i+1);}
+
+  // 端数まで1円単位でぴったり合う均等割り＋最小回数の精算を計算
+  function calc(){
+    var n=people.length;
+    var total=0; people.forEach(function(p){total+=(p.paid||0);});
+    var shares=[];
+    if(n>0){
+      var base=Math.floor(total/n), rem=total-base*n;
+      for(var i=0;i<n;i++){ shares.push(base+(i<rem?1:0)); } // 端数の1円は先頭から順に負担
+    }
+    var bal=people.map(function(p,i){return {name:nm(p,i),bal:(p.paid||0)-(shares[i]||0)};});
+    // グリーディに最大の受取人と最大の支払人を相殺
+    var cred=[],deb=[];
+    bal.forEach(function(b){ if(b.bal>0)cred.push({name:b.name,amt:b.bal}); else if(b.bal<0)deb.push({name:b.name,amt:-b.bal}); });
+    cred.sort(function(a,b){return b.amt-a.amt;}); deb.sort(function(a,b){return b.amt-a.amt;});
+    var tx=[],ci=0,di=0,guard=0;
+    while(di<deb.length&&ci<cred.length&&guard++<1000){
+      var pay=Math.min(deb[di].amt,cred[ci].amt);
+      if(pay>0)tx.push({from:deb[di].name,to:cred[ci].name,amt:pay});
+      deb[di].amt-=pay; cred[ci].amt-=pay;
+      if(deb[di].amt===0)di++;
+      if(cred[ci].amt===0)ci++;
+    }
+    return {total:total,n:n,each:n>0?total/n:0,bal:bal,tx:tx};
+  }
+
+  function renderList(){
+    var ul=$("list"); ul.innerHTML="";
+    people.forEach(function(p,idx){
+      var li=document.createElement("li"); li.className="pay-row";
+      var name=document.createElement("input"); name.className="name"; name.type="text"; name.value=p.name; name.placeholder="名前"; name.setAttribute("aria-label","名前");
+      name.oninput=function(){ p.name=name.value; save(); renderResult(); };
+      var amtWrap=document.createElement("div"); amtWrap.className="mini-amt";
+      var yensym=document.createElement("span"); yensym.className="yen"; yensym.textContent="¥";
+      var amt=document.createElement("input"); amt.type="text"; amt.inputMode="numeric"; amt.autocomplete="off"; amt.setAttribute("aria-label","立て替えた額");
+      amt.value=p.paid?p.paid.toLocaleString("ja-JP"):"";
+      amt.oninput=function(){ var v=parseAmt(amt.value); p.paid=v; amt.value=v?v.toLocaleString("ja-JP"):""; save(); renderResult(); };
+      amtWrap.appendChild(yensym); amtWrap.appendChild(amt);
+      var del=document.createElement("button"); del.type="button"; del.className="del"; del.textContent="×"; del.setAttribute("aria-label","この人を削除");
+      del.onclick=function(){ if(people.length>1){ people.splice(idx,1); save(); render(); } };
+      li.appendChild(name); li.appendChild(amtWrap); li.appendChild(del);
+      ul.appendChild(li);
+    });
+    $("count").textContent=people.length;
+  }
+
+  function renderResult(){
+    var r=calc();
+    // 精算トランザクション
+    var ul=$("tx"); ul.innerHTML="";
+    if(r.tx.length===0){
+      var li=document.createElement("li"); li.className="empty-note";
+      li.textContent=r.total>0?"精算の必要はありません（ぴったり）":"金額を入力すると精算方法が出ます";
+      ul.appendChild(li);
+    } else {
+      r.tx.forEach(function(t){
+        var li=document.createElement("li"); li.className="res";
+        var who=document.createElement("div"); who.className="who";
+        var f=document.createElement("b"); f.textContent=t.from;
+        var ar=document.createElement("span"); ar.className="tx-arrow"; ar.textContent="→";
+        var to=document.createElement("b"); to.textContent=t.to;
+        who.appendChild(f); who.appendChild(ar); who.appendChild(to);
+        var amt=document.createElement("span"); amt.className="amt"; amt.textContent=yen(t.amt);
+        li.appendChild(who); li.appendChild(amt); ul.appendChild(li);
+      });
+    }
+    // 各自の過不足
+    var bl=$("bal"); bl.innerHTML="";
+    r.bal.forEach(function(b){
+      if(b.bal===0)return;
+      var li=document.createElement("li"); li.className=b.bal>0?"plus":"minus";
+      li.textContent=b.name+(b.bal>0?" +"+yen(b.bal).slice(1):" −"+yen(-b.bal).slice(1));
+      bl.appendChild(li);
+    });
+    $("total").textContent=yen(r.total);
+    $("np").textContent=r.n;
+    $("each").textContent="約"+yen(r.each);
+  }
+  function render(){ renderList(); renderResult(); }
+
+  function shareText(){
+    var r=calc(); var lines=["【立て替え精算】合計 "+yen(r.total)+"（"+r.n+"人・1人あたり約"+yen(r.each)+"）"];
+    if(r.tx.length===0){ lines.push(r.total>0?"精算の必要はありません":"（金額未入力）"); }
+    else { r.tx.forEach(function(t){ lines.push("・"+t.from+" → "+t.to+" "+yen(t.amt)); }); }
+    lines.push("— 幹事の道具箱"); return lines.join("\n");
+  }
+  function toast(msg){var el=$("toast");el.textContent=msg;el.classList.add("show");setTimeout(function(){el.classList.remove("show");},1600);}
+
+  $("plus").onclick=function(){ if(people.length<40){ people.push({name:"",paid:0}); save(); render(); } };
+  $("minus").onclick=function(){ if(people.length>1){ people.pop(); save(); render(); } };
+  $("copy").onclick=function(){ var tx=shareText(); if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(tx).then(function(){toast("コピーしました");},function(){toast("コピーしました");});}else{var ta=document.createElement("textarea");ta.value=tx;document.body.appendChild(ta);ta.select();try{document.execCommand("copy");}catch(e){}document.body.removeChild(ta);toast("コピーしました");} };
+  $("line").onclick=function(){ window.open("https://line.me/R/msg/text/?"+encodeURIComponent(shareText()),"_blank"); };
+
+  render();
+})();
+</script>
+</body>
+</html>
