@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>くじ引きオンライン｜あたり付きのくじをその場で作って引ける｜幹事の道具箱</title>
+<meta name="description" content="本数とあたりの数を決めるだけで、あたり付きのくじをその場で作成。カードをタップして引くと結果が出ます。飲み会の景品・当番・順番決めに。あたりのラベルも自由。登録不要・無料。">
+<meta name="theme-color" content="#1b2a4a">
+<meta property="og:title" content="くじ引きオンライン">
+<meta property="og:description" content="あたり付きのくじをその場で作って引ける。景品・当番決めに。">
+<link rel="canonical" href="https://kusayakyu-navi.com/kanji-toolbox/kuji.html">
+<link rel="stylesheet" href="styles.css">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6423402285554400" crossorigin="anonymous"></script>
+</head>
+<body>
+<div class="app has-bar">
+  <header class="masthead tool">
+    <a class="back" href="index.html" aria-label="道具箱にもどる">‹</a>
+    <div class="brand-mark"><span class="kan">籤</span>くじ引き</div>
+  </header>
+
+  <main>
+    <section class="panel">
+      <div class="kuji-cfg">
+        <div class="col">
+          <div class="panel-head" style="margin-bottom:8px"><span class="field-label sm">本数</span>
+            <div class="count-ctrl"><button type="button" id="nMinus" aria-label="本数を減らす">−</button><span id="nCount">8</span><button type="button" id="nPlus" aria-label="本数を増やす">＋</button></div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="panel-head" style="margin-bottom:8px"><span class="field-label sm">あたり</span>
+            <div class="count-ctrl"><button type="button" id="kMinus" aria-label="あたりを減らす">−</button><span id="kCount">2</span><button type="button" id="kPlus" aria-label="あたりを増やす">＋</button></div>
+          </div>
+        </div>
+      </div>
+      <label class="field-label" for="atari" style="margin-top:4px">あたりのことば</label>
+      <input id="atari" type="text" class="names-area" style="min-height:0;height:auto;padding:10px 12px" value="🎉 当たり">
+    </section>
+
+    <section class="panel">
+      <div class="bingo-count" id="status" style="margin-top:0;margin-bottom:6px">カードをタップして引いてね</div>
+      <div class="kuji-grid" id="grid"></div>
+    </section>
+  </main>
+
+  <footer>
+    <h3>くじ引きオンラインとは</h3>
+    <p>くじの本数と「あたり」の数を決めるだけで、あたり付きのくじをその場で作成できるツールです。カードをタップすると1枚ずつ引けて、あたり・はずれがその場で分かります。飲み会の景品配布、幹事や当番・順番決め、ちょっとしたゲームに。あたりのことばは自由に変えられます。引いた結果はリセットして何度でも作り直せます。</p>
+    <div class="links"><a href="index.html">← ほかの幹事ツール</a></div>
+  </footer>
+</div>
+
+<div class="settle">
+  <div class="settle-actions">
+    <button type="button" class="btn primary" id="make" style="flex:2">🎴 くじを作り直す</button>
+    <button type="button" class="btn ghost" id="openAll" style="flex:1">全部めくる</button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  var n=8, k=2, results=[], opened=[];
+  function atariLabel(){ return ($("atari").value||"当たり").trim(); }
+
+  function shuffleArr(a){for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+  function make(){
+    if(k>n)k=n;
+    results=[]; for(var i=0;i<n;i++)results.push(i<k?"atari":"hazure"); shuffleArr(results);
+    opened=results.map(function(){return false;});
+    render();
+  }
+  function render(){
+    $("nCount").textContent=n; $("kCount").textContent=k;
+    var g=$("grid"); g.innerHTML="";
+    results.forEach(function(r,i){
+      var c=document.createElement("div"); c.className="kuji-card"+(opened[i]?(" open "+r):"");
+      var num=document.createElement("span"); num.className="kuji-num"; num.textContent=(i+1); c.appendChild(num);
+      if(opened[i]){
+        var lab=document.createElement("span"); lab.className="lab"; lab.textContent = r==="atari"?atariLabel():"はずれ"; c.appendChild(lab);
+      }else{
+        var t=document.createElement("span"); t.textContent="🎫"; c.appendChild(t);
+        c.onclick=function(){ opened[i]=true; render(); };
+      }
+      g.appendChild(c);
+    });
+    updateStatus();
+  }
+  function updateStatus(){
+    var openedCount=0, atariOpened=0;
+    results.forEach(function(r,i){ if(opened[i]){ openedCount++; if(r==="atari")atariOpened++; } });
+    var remainA = k - atariOpened;
+    $("status").textContent = openedCount===0 ? ("全"+n+"本中 あたり"+k+"本 ／ タップして引く")
+      : ("引いた "+openedCount+"/"+n+"　残りあたり "+remainA+"本");
+  }
+  function toast(msg){var t=$("toast");t.textContent=msg;t.classList.add("show");setTimeout(function(){t.classList.remove("show");},1400);}
+
+  $("nPlus").onclick=function(){ if(n<20){ n++; make(); } };
+  $("nMinus").onclick=function(){ if(n>2){ n--; if(k>n)k=n; make(); } };
+  $("kPlus").onclick=function(){ if(k<n){ k++; make(); } };
+  $("kMinus").onclick=function(){ if(k>1){ k--; make(); } };
+  $("atari").addEventListener("input",function(){ render(); });
+  $("make").onclick=function(){ make(); toast("引き直しました"); };
+  $("openAll").onclick=function(){ opened=results.map(function(){return true;}); render(); };
+
+  make();
+})();
+</script>
+</body>
+</html>
